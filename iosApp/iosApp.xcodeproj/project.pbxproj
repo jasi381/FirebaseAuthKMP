@@ -6,8 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B5B122A26160162C15967EC1 /* _internal_linkage_SwiftPMImport in Frameworks */ = {isa = PBXBuildFile; productRef = C8CBBAAE67C78055B3F43142 /* _internal_linkage_SwiftPMImport */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
-		48DF503CAC56F8212F849D8D /* FirebaseAuth.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FirebaseAuth.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		48DF503CAC56F8212F849D8D /* FirebaseAuthApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FirebaseAuthApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -41,6 +45,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B5B122A26160162C15967EC1 /* _internal_linkage_SwiftPMImport in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,7 +64,7 @@
 		311B6643166A5AA6AFA3C7F1 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				48DF503CAC56F8212F849D8D /* FirebaseAuth.app */,
+				48DF503CAC56F8212F849D8D /* FirebaseAuthApp.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -85,9 +90,10 @@
 			);
 			name = iosApp;
 			packageProductDependencies = (
+				C8CBBAAE67C78055B3F43142 /* _internal_linkage_SwiftPMImport */,
 			);
 			productName = iosApp;
-			productReference = 48DF503CAC56F8212F849D8D /* FirebaseAuth.app */;
+			productReference = 48DF503CAC56F8212F849D8D /* FirebaseAuthApp.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -114,6 +120,9 @@
 			);
 			mainGroup = 30FF9ED21F39F065D1A34BB7;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C38B8FB9B23331173D84A0B8 /* XCLocalSwiftPackageReference "_internal_linkage_SwiftPMImport" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 311B6643166A5AA6AFA3C7F1 /* Products */;
 			projectDirPath = "";
@@ -370,6 +379,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		C38B8FB9B23331173D84A0B8 /* XCLocalSwiftPackageReference "_internal_linkage_SwiftPMImport" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = _internal_linkage_SwiftPMImport;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C8CBBAAE67C78055B3F43142 /* _internal_linkage_SwiftPMImport */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C38B8FB9B23331173D84A0B8 /* XCLocalSwiftPackageReference "_internal_linkage_SwiftPMImport" */;
+			productName = _internal_linkage_SwiftPMImport;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CCA4578F73397FCF1378D70D /* Project object */;
 }
