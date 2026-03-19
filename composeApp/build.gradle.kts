@@ -38,6 +38,13 @@ kotlin {
                 product("FirebaseCore")
             )
         )
+        swiftPackage(
+            url = url("https://github.com/google/GoogleSignIn-iOS.git"),
+            version = from("8.0.0"),
+            products = listOf(
+                product("GoogleSignIn")
+            )
+        )
     }
 
 
@@ -47,6 +54,9 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.auth.android)
+            implementation(libs.androidx.credentials)
+            implementation(libs.androidx.credentials.play.services)
+            implementation(libs.google.id)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)

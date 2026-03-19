@@ -52,6 +52,9 @@ class AuthViewModel : ViewModel() {
         auth.signInWithEmail(email, password)
     }
 
+    fun signInWithGoogle() = launchAuth {
+        auth.signInWithGoogle()
+    }
 
     fun signOut() {
         viewModelScope.launch {

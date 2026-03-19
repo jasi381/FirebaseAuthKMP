@@ -13,6 +13,8 @@ expect class FirebaseAuth() {
 
     suspend fun signInWithEmail(email: String, password: String): AuthUser
 
+    suspend fun signInWithGoogle(): AuthUser
+
     suspend fun signOut()
 
     suspend fun sendPasswordResetEmail(email: String)

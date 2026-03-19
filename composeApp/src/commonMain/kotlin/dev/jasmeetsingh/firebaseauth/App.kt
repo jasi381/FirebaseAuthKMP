@@ -79,7 +79,7 @@ fun App() {
                     onForgotPassword   = { email -> viewModel.sendPasswordResetEmail(email) },
                     onNavigateToSignUp = { currentScreen = Screen.SIGNUP },
                     onClearError       = { viewModel.clearError() },
-                    onGoogleSignIn = {}
+                    onGoogleSignIn = { viewModel.signInWithGoogle() }
                 )
 
                 Screen.SIGNUP -> SignUpScreen(

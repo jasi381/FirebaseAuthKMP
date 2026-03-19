@@ -5,8 +5,11 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
+import platform.UIKit.UIApplication
 import swiftPMImport.dev.jasmeetsingh.composeApp.FIRAuth
+import swiftPMImport.dev.jasmeetsingh.composeApp.FIRGoogleAuthProvider
 import swiftPMImport.dev.jasmeetsingh.composeApp.FIRUser
+import swiftPMImport.dev.jasmeetsingh.composeApp.GIDSignIn
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -38,6 +41,44 @@ actual class FirebaseAuth actual constructor() {
             }
         }
 
+    @Suppress("DEPRECATION")
+    actual suspend fun signInWithGoogle(): AuthUser =
+        suspendCancellableCoroutine { cont ->
+            val rootViewController = UIApplication.sharedApplication.keyWindow?.rootViewController
+            if (rootViewController == null) {
+                cont.resumeWithException(Exception("No root view controller found"))
+                return@suspendCancellableCoroutine
+            }
+
+            GIDSignIn.sharedInstance.signInWithPresentingViewController(rootViewController) { signInResult, error ->
+                if (error != null) {
+                    cont.resumeWithException(Exception(error.localizedDescription))
+                    return@signInWithPresentingViewController
+                }
+
+                val googleUser = signInResult?.user
+                val idToken = googleUser?.idToken?.tokenString
+                val accessToken = googleUser?.accessToken?.tokenString
+
+                if (idToken == null) {
+                    cont.resumeWithException(Exception("Failed to get Google ID token"))
+                    return@signInWithPresentingViewController
+                }
+
+                val credential = FIRGoogleAuthProvider.credentialWithIDToken(
+                    idToken,
+                    accessToken = accessToken ?: ""
+                )
+
+                auth.signInWithCredential(credential) { authResult, authError ->
+                    if (authError != null) {
+                        cont.resumeWithException(Exception(authError.localizedDescription))
+                    } else {
+                        cont.resume(authResult!!.user.toAuthUser())
+                    }
+                }
+            }
+        }
 
     actual suspend fun signOut() {
         auth.signOut(null)
