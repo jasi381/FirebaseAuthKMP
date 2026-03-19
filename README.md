@@ -123,3 +123,8 @@ Use the iOS run configuration in Android Studio, or open `iosApp/` in Xcode and 
 
 **`Missing package product '_internal_linkage_SwiftPMImport'`**: Run `xcodebuild -resolvePackageDependencies` after integrating the linkage package.
 
+
+# Demo
+https://github.com/user-attachments/assets/94bcb620-966d-4923-8185-a07a03b90a1a
+
+
