@@ -42,6 +42,7 @@ firebase-bom             = { module = "com.google.firebase:firebase-bom", versio
 androidx-credentials             = { module = "androidx.credentials:credentials", version.ref = "credentials" }
 androidx-credentials-play-services = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
 google-id                        = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
+firebase-firestore-android = { module = "com.google.firebase:firebase-firestore" }
 
 
 [plugins]

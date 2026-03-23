@@ -64,8 +64,16 @@ fun App() {
 
     when (authState) {
         is AuthState.Authenticated -> {
+            val currentUser = (authState as AuthState.Authenticated).user
+            val allUsers by viewModel.allUsers.collectAsState()
+
+            LaunchedEffect(currentUser.uid) {
+                viewModel.loadAllUsers(currentUser.uid)
+            }
+
             HomeScreen(
-                user = (authState as AuthState.Authenticated).user,
+                user = currentUser,
+                allUsers = allUsers,
                 onSignOut = { viewModel.signOut() }
             )
         }

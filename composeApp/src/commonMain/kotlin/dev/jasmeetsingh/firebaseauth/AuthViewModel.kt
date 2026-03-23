@@ -22,6 +22,7 @@ class AuthViewModel : ViewModel() {
 
     // ─── Instantiate expect class directly — no injection needed ─────────────
     private val auth = FirebaseAuth()
+    private val db = FirebaseFirestoree()
 
     // ─── Auth state driven by Firebase's own persistence ─────────────────────
 
@@ -45,7 +46,12 @@ class AuthViewModel : ViewModel() {
 
     // ─── Actions ──────────────────────────────────────────────────────────────
     fun signUpWithEmail(email: String, password: String) = launchAuth {
-        auth.signUpWithEmail(email, password)
+        val user = auth.signUpWithEmail(email, password)
+        db.saveUser(
+            uid = user.uid,
+            data = mapOf("uid" to user.uid, "email" to (user.email ?: ""))
+        )
+        user
     }
 
     fun signInWithEmail(email: String, password: String) = launchAuth {
@@ -53,7 +59,12 @@ class AuthViewModel : ViewModel() {
     }
 
     fun signInWithGoogle() = launchAuth {
-        auth.signInWithGoogle()
+        val user = auth.signInWithGoogle()
+        db.saveUser(
+            uid = user.uid,
+            data = mapOf("uid" to user.uid, "email" to (user.email ?: ""))
+        )
+        user
     }
 
     fun signOut() {
@@ -69,6 +80,18 @@ class AuthViewModel : ViewModel() {
                 .onSuccess  { _errorMessage.value = "Reset email sent!" }
                 .onFailure  { _errorMessage.value = it.message }
             _isLoading.value = false
+        }
+    }
+
+    private val _allUsers = MutableStateFlow<List<Map<String, Any>>>(emptyList())
+    val allUsers: StateFlow<List<Map<String, Any>>> = _allUsers.asStateFlow()
+
+    fun loadAllUsers(currentUid: String) {
+        viewModelScope.launch {
+            runCatching { db.getAllUsers() }
+                .onSuccess { users ->
+                    _allUsers.value = users.filter { it["uid"] != currentUid }
+                }
         }
     }
 

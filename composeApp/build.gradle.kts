@@ -35,7 +35,8 @@ kotlin {
             version = from("11.0.0"),
             products = listOf(
                 product("FirebaseAuth"),
-                product("FirebaseCore")
+                product("FirebaseCore"),
+                product("FirebaseFirestore")
             )
         )
         swiftPackage(
@@ -54,6 +55,7 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.auth.android)
+            implementation(libs.firebase.firestore.android)
             implementation(libs.androidx.credentials)
             implementation(libs.androidx.credentials.play.services)
             implementation(libs.google.id)
