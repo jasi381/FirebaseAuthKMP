@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -34,10 +35,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.jasmeetsingh.composeapp.generated.resources.Res
+import dev.jasmeetsingh.composeapp.generated.resources.ic_audio_call
 import dev.jasmeetsingh.composeapp.generated.resources.ic_logout
+import dev.jasmeetsingh.composeapp.generated.resources.ic_video_call
 import dev.jasmeetsingh.firebaseauth.AuthUser
 import org.jetbrains.compose.resources.vectorResource
-
 private val DarkBg = Color(0xFF0F0F1A)
 private val DarkSurface = Color(0xFF1A1A2E)
 private val Indigo = Color(0xFF6366F1)
@@ -137,8 +139,13 @@ fun HomeScreen(
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
+
                 ) {
-                    items(allUsers) { userData ->
+                    items(
+                        allUsers,
+                        key = { it["uid"] as String },
+                        contentType = { "user_item" },
+                    ) { userData ->
                         UserCard(userData)
                     }
                     item { Spacer(Modifier.height(16.dp)) }
@@ -158,7 +165,7 @@ private fun UserCard(userData: Map<String, Any>) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(DarkSurface)
+            .background(Color.White.copy(alpha = 0.4f))
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -189,9 +196,25 @@ private fun UserCard(userData: Map<String, Any>) {
             Text(
                 uid,
                 fontSize = 11.sp,
-                color = Color(0xFF475569),
+                color = Color.Black,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+            )
+        }
+
+        Spacer(Modifier.weight(1f))
+
+        FilledTonalIconButton(onClick = {}){
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_audio_call),
+                contentDescription = "Sign Out"
+            )
+        }
+
+        FilledTonalIconButton(onClick = {}){
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_video_call),
+                contentDescription = "Sign Out"
             )
         }
     }

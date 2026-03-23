@@ -35,6 +35,10 @@ let package = Package(
           package: "firebase-ios-sdk",
         ),
         .product(
+          name: "FirebaseFirestore",
+          package: "firebase-ios-sdk",
+        ),
+        .product(
           name: "GoogleSignIn",
           package: "GoogleSignIn-iOS",
         )

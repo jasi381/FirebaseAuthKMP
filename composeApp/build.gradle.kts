@@ -19,7 +19,6 @@ kotlin {
     }
     
     listOf(
-        iosX64(),               // Intel Mac simulator
         iosArm64(),             // Real device
         iosSimulatorArm64()     // Apple Silicon simulator
     ).forEach { iosTarget ->
