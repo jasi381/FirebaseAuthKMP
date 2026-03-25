@@ -20,6 +20,10 @@ let package = Package(
     .package(
       url: "https://github.com/google/GoogleSignIn-iOS.git",
       from: "8.0.0",
+    ),
+    .package(
+      url: "https://github.com/AgoraIO/AgoraRtcEngine_iOS.git",
+      from: "4.6.2",
     )
   ],
   targets: [
@@ -39,8 +43,16 @@ let package = Package(
           package: "firebase-ios-sdk",
         ),
         .product(
+          name: "FirebaseDatabase",
+          package: "firebase-ios-sdk",
+        ),
+        .product(
           name: "GoogleSignIn",
           package: "GoogleSignIn-iOS",
+        ),
+        .product(
+          name: "RtcBasic",
+          package: "AgoraRtcEngine_iOS",
         )
       ]
     )

@@ -35,7 +35,8 @@ kotlin {
             products = listOf(
                 product("FirebaseAuth"),
                 product("FirebaseCore"),
-                product("FirebaseFirestore")
+                product("FirebaseFirestore"),
+                product("FirebaseDatabase")
             )
         )
         swiftPackage(
@@ -44,6 +45,11 @@ kotlin {
             products = listOf(
                 product("GoogleSignIn")
             )
+        )
+        swiftPackage(
+            url = url("https://github.com/AgoraIO/AgoraRtcEngine_iOS.git"),
+            version = from("4.6.2"),
+            products = listOf(product("RtcBasic"))
         )
     }
 
@@ -55,9 +61,11 @@ kotlin {
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.auth.android)
             implementation(libs.firebase.firestore.android)
+            implementation(libs.firebase.database.android)
             implementation(libs.androidx.credentials)
             implementation(libs.androidx.credentials.play.services)
             implementation(libs.google.id)
+            implementation("io.agora.rtc:full-sdk:4.6.2")
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)

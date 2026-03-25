@@ -15,5 +15,9 @@
 			</array>
 		</dict>
 	</array>
+    <key>NSCameraUsageDescription</key>
+    <string>Camera access for video calls</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Microphone access for calls</string>
 </dict>
 </plist>

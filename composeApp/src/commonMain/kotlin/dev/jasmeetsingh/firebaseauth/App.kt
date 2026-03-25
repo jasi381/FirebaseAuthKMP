@@ -1,55 +1,14 @@
 package dev.jasmeetsingh.firebaseauth
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
-import dev.jasmeetsingh.composeapp.generated.resources.Res
-import dev.jasmeetsingh.composeapp.generated.resources.compose_multiplatform
 import dev.jasmeetsingh.firebaseauth.ui.HomeScreen
+import dev.jasmeetsingh.firebaseauth.ui.IncomingCallOverlay
 import dev.jasmeetsingh.firebaseauth.ui.LoginScreen
 import dev.jasmeetsingh.firebaseauth.ui.SignUpScreen
-import org.jetbrains.compose.resources.painterResource
-
-//@Composable
-//@Preview
-//fun App() {
-//    MaterialTheme {
-//        var showContent by remember { mutableStateOf(false) }
-//        Column(
-//            modifier = Modifier
-//                .background(MaterialTheme.colorScheme.primaryContainer)
-//                .safeContentPadding()
-//                .fillMaxSize(),
-//            horizontalAlignment = Alignment.CenterHorizontally,
-//        ) {
-//            Button(onClick = { showContent = !showContent }) {
-//                Text("Click me!")
-//            }
-//            AnimatedVisibility(showContent) {
-//                val greeting = remember { Greeting().greet() }
-//                Column(
-//                    modifier = Modifier.fillMaxWidth(),
-//                    horizontalAlignment = Alignment.CenterHorizontally,
-//                ) {
-//                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-//                    Text("Compose: $greeting")
-//                }
-//            }
-//        }
-//    }
-//}
 
 enum class Screen { LOGIN, SIGNUP, HOME }
 
@@ -60,46 +19,122 @@ fun App() {
     val isLoading    by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
+    val callService = remember { CallService() }
+    val callSignaling = remember { CallSignaling() }
     var currentScreen by remember { mutableStateOf(Screen.LOGIN) }
 
-    when (authState) {
-        is AuthState.Authenticated -> {
-            val currentUser = (authState as AuthState.Authenticated).user
-            val allUsers by viewModel.allUsers.collectAsState()
+    // Incoming call state — observed globally
+    var incomingCall by remember { mutableStateOf<CallInvite?>(null) }
 
-            LaunchedEffect(currentUser.uid) {
-                viewModel.loadAllUsers(currentUser.uid)
+    // Start listening for incoming calls when authenticated
+    val currentUser = (authState as? AuthState.Authenticated)?.user
+    LaunchedEffect(currentUser?.uid) {
+        val uid = currentUser?.uid ?: return@LaunchedEffect
+        callSignaling.observeIncomingCall(uid).collect { invite ->
+            incomingCall = invite
+        }
+    }
+
+    // Auto-timeout: clear invite after 30 seconds
+    LaunchedEffect(incomingCall) {
+        val invite = incomingCall ?: return@LaunchedEffect
+        kotlinx.coroutines.delay(30_000)
+        // If still the same invite after 30s, auto-reject
+        if (incomingCall?.timestamp == invite.timestamp) {
+            callSignaling.clearCall(currentUser?.uid ?: "")
+            incomingCall = null
+        }
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        // Main app content
+        when (authState) {
+            is AuthState.Authenticated -> {
+                val user = (authState as AuthState.Authenticated).user
+                val allUsers by viewModel.allUsers.collectAsState()
+
+                LaunchedEffect(user.uid) {
+                    viewModel.loadAllUsers(user.uid)
+                }
+
+                HomeScreen(
+                    user = user,
+                    allUsers = allUsers,
+                    onSignOut = { viewModel.signOut() },
+                    onVideoCall = { targetUid ->
+                        val channel = listOf(user.uid, targetUid).sorted().joinToString("_")
+                        // Send invite via Realtime DB, then start call
+                        callSignaling.sendCallInvite(
+                            targetUid = targetUid,
+                            callerUid = user.uid,
+                            callerEmail = user.email ?: "",
+                            channelName = channel,
+                            callType = "video",
+                        )
+                        callService.startVideoCall(channel)
+                    },
+                    onAudioCall = { targetUid ->
+                        val channel = listOf(user.uid, targetUid).sorted().joinToString("_")
+                        callSignaling.sendCallInvite(
+                            targetUid = targetUid,
+                            callerUid = user.uid,
+                            callerEmail = user.email ?: "",
+                            channelName = channel,
+                            callType = "audio",
+                        )
+                        callService.startAudioCall(channel)
+                    },
+                )
             }
 
-            HomeScreen(
-                user = currentUser,
-                allUsers = allUsers,
-                onSignOut = { viewModel.signOut() }
-            )
+            is AuthState.Unauthenticated, is AuthState.Error, is AuthState.Loading -> {
+                when (currentScreen) {
+                    Screen.LOGIN -> LoginScreen(
+                        isLoading          = isLoading,
+                        errorMessage       = errorMessage,
+                        onSignIn           = { email, password -> viewModel.signInWithEmail(email, password) },
+                        onForgotPassword   = { email -> viewModel.sendPasswordResetEmail(email) },
+                        onNavigateToSignUp = { currentScreen = Screen.SIGNUP },
+                        onClearError       = { viewModel.clearError() },
+                        onGoogleSignIn     = { viewModel.signInWithGoogle() }
+                    )
+
+                    Screen.SIGNUP -> SignUpScreen(
+                        isLoading          = isLoading,
+                        errorMessage       = errorMessage,
+                        onSignUp           = { email, password -> viewModel.signUpWithEmail(email, password) },
+                        onNavigateToLogin  = { currentScreen = Screen.LOGIN },
+                        onClearError       = { viewModel.clearError() }
+                    )
+
+                    Screen.HOME -> Unit
+                }
+            }
         }
 
-        is AuthState.Unauthenticated, is AuthState.Error, is AuthState.Loading -> {
-            when (currentScreen) {
-                Screen.LOGIN -> LoginScreen(
-                    isLoading          = isLoading,
-                    errorMessage       = errorMessage,
-                    onSignIn           = { email, password -> viewModel.signInWithEmail(email, password) },
-                    onForgotPassword   = { email -> viewModel.sendPasswordResetEmail(email) },
-                    onNavigateToSignUp = { currentScreen = Screen.SIGNUP },
-                    onClearError       = { viewModel.clearError() },
-                    onGoogleSignIn = { viewModel.signInWithGoogle() }
-                )
-
-                Screen.SIGNUP -> SignUpScreen(
-                    isLoading          = isLoading,
-                    errorMessage       = errorMessage,
-                    onSignUp           = { email, password -> viewModel.signUpWithEmail(email, password) },
-                    onNavigateToLogin  = { currentScreen = Screen.LOGIN },
-                    onClearError       = { viewModel.clearError() }
-                )
-
-                Screen.HOME -> Unit // unreachable
-            }
+        // Global incoming call overlay — renders ON TOP of everything
+        incomingCall?.let { invite ->
+            IncomingCallOverlay(
+                invite = invite,
+                onAccept = {
+                    val myUid = currentUser?.uid ?: return@IncomingCallOverlay
+                    callSignaling.acceptCall(myUid)
+                    incomingCall = null
+                    // Join the same Agora channel
+                    if (invite.callType == "video") {
+                        callService.startVideoCall(invite.channelName)
+                    } else {
+                        callService.startAudioCall(invite.channelName)
+                    }
+                    // Clean up after a short delay to let caller see "accepted"
+                    callSignaling.clearCall(myUid)
+                },
+                onReject = {
+                    val myUid = currentUser?.uid ?: return@IncomingCallOverlay
+                    callSignaling.clearCall(myUid)
+                    incomingCall = null
+                },
+            )
         }
     }
 }

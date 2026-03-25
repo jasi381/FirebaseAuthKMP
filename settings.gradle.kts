@@ -4,6 +4,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
         maven("https://packages.jetbrains.team/maven/p/kt/dev")  // ← dev build repo
+        maven { url = uri("https://jitpack.io") }
         google {
             mavenContent {
                 includeGroupAndSubgroups("androidx")

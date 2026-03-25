@@ -43,6 +43,7 @@ androidx-credentials             = { module = "androidx.credentials:credentials"
 androidx-credentials-play-services = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
 google-id                        = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 firebase-firestore-android = { module = "com.google.firebase:firebase-firestore" }
+firebase-database-android  = { module = "com.google.firebase:firebase-database" }
 
 
 [plugins]

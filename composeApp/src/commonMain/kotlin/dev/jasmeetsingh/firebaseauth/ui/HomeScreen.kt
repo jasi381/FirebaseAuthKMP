@@ -51,6 +51,8 @@ fun HomeScreen(
     user: AuthUser,
     allUsers: List<Map<String, Any>>,
     onSignOut: () -> Unit,
+    onVideoCall: (targetUid: String) -> Unit,
+    onAudioCall: (targetUid: String) -> Unit,
 ) {
     val initial = (user.displayName?.firstOrNull() ?: user.email?.firstOrNull() ?: '?')
         .uppercaseChar()
@@ -84,15 +86,15 @@ fun HomeScreen(
                         Spacer(Modifier.width(12.dp))
 
 
-                            user.email?.let {
-                                Text(
-                                    it,
-                                    fontSize = 16.sp,
-                                    color = Color.White,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
+                        user.email?.let {
+                            Text(
+                                it,
+                                fontSize = 16.sp,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
 
                     }
                 },
@@ -140,13 +142,18 @@ fun HomeScreen(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
 
-                ) {
+                    ) {
                     items(
                         allUsers,
                         key = { it["uid"] as String },
                         contentType = { "user_item" },
                     ) { userData ->
-                        UserCard(userData)
+                        val targetUid = userData["uid"]?.toString() ?: ""
+                        UserCard(
+                            userData,
+                            onVideoCall = { onVideoCall(targetUid) },
+                            onAudioCall = { onAudioCall(targetUid) },
+                        )
                     }
                     item { Spacer(Modifier.height(16.dp)) }
                 }
@@ -156,7 +163,11 @@ fun HomeScreen(
 }
 
 @Composable
-private fun UserCard(userData: Map<String, Any>) {
+private fun UserCard(
+    userData: Map<String, Any>,
+    onVideoCall: () -> Unit,
+    onAudioCall: () -> Unit,
+) {
     val email = userData["email"]?.toString() ?: "No email"
     val uid = userData["uid"]?.toString() ?: ""
     val cardInitial = (email.firstOrNull() ?: '?').uppercaseChar()
@@ -204,17 +215,17 @@ private fun UserCard(userData: Map<String, Any>) {
 
         Spacer(Modifier.weight(1f))
 
-        FilledTonalIconButton(onClick = {}){
+        FilledTonalIconButton(onClick = onVideoCall){
             Icon(
-                imageVector = vectorResource(Res.drawable.ic_audio_call),
-                contentDescription = "Sign Out"
+                imageVector = vectorResource(Res.drawable.ic_video_call),
+                contentDescription = "Video Call"
             )
         }
 
-        FilledTonalIconButton(onClick = {}){
+        FilledTonalIconButton(onClick = onAudioCall){
             Icon(
-                imageVector = vectorResource(Res.drawable.ic_video_call),
-                contentDescription = "Sign Out"
+                imageVector = vectorResource(Res.drawable.ic_audio_call),
+                contentDescription = "Audio Call"
             )
         }
     }
