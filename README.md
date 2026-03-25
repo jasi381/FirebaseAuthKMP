@@ -125,28 +125,28 @@ iosApp/                            # Xcode project entry point
   - **Realtime Database** created (for call signaling)
 - An [Agora](https://www.agora.io/) account with an App ID
 
-## Setup
+## Setup (Fresh Clone)
 
-### 1. Clone & open in Android Studio
+### Step 1 — Clone & open
 
 ```shell
 git clone <repo-url>
 ```
 
-### 2. Firebase configuration
+Open the project in **Android Studio** (with KMP plugin installed).
 
-- Place your `google-services.json` in `composeApp/`
-- Place your `GoogleService-Info.plist` in `iosApp/iosApp/`
+### Step 2 — Create a Firebase project
 
-### 3. Agora App ID
-
-Update the App ID in `composeApp/src/commonMain/kotlin/.../CallService.kt`:
-
-```kotlin
-const val AGORA_APP_ID = "your-agora-app-id"
-```
-
-### 4. Firebase Realtime Database Rules
+1. Go to [Firebase Console](https://console.firebase.google.com/) → **Create a project**
+2. **Register an Android app** with package name `dev.jasmeetsingh.firebaseauth`
+   - Download `google-services.json` → place in `composeApp/`
+3. **Register an iOS app** with bundle ID `dev.jasmeetsingh.firebaseauth.FirebaseAuthApp`
+   - Download `GoogleService-Info.plist` → place in `iosApp/iosApp/`
+4. Enable these in Firebase Console:
+   - **Authentication → Sign-in method → Email/Password** ✅
+   - **Authentication → Sign-in method → Google** ✅
+   - **Cloud Firestore → Create database** (test mode is fine to start)
+   - **Realtime Database → Create database** → use these rules:
 
 ```json
 {
@@ -161,9 +161,42 @@ const val AGORA_APP_ID = "your-agora-app-id"
 }
 ```
 
-### 5. iOS — SPM linkage (one-time)
+### Step 3 — Create an Agora account
 
-After the first Gradle sync, run:
+1. Go to [Agora Console](https://console.agora.io/) → Create a project
+2. Choose **"Testing mode: App ID"** (no certificate)
+3. Copy the **App ID** and update it in:
+
+```
+composeApp/src/commonMain/kotlin/.../CallService.kt
+```
+
+```kotlin
+const val AGORA_APP_ID = "your-agora-app-id-here"
+```
+
+### Step 4 — iOS configuration
+
+**4a. Update Info.plist** (`iosApp/iosApp/Info.plist`):
+
+Open your downloaded `GoogleService-Info.plist` and copy these values:
+
+| Info.plist key | Value from GoogleService-Info.plist |
+|---|---|
+| `GIDClientID` | `CLIENT_ID` |
+| `CFBundleURLSchemes` | `REVERSED_CLIENT_ID` |
+
+Camera & mic permissions are already in the template.
+
+**4b. Set your Team ID** in `iosApp/Configuration/Config.xcconfig`:
+
+```
+TEAM_ID=YOUR_APPLE_TEAM_ID
+```
+
+(Find it in Xcode → Settings → Accounts → your team)
+
+**4c. SwiftPM linkage** (one-time, after first Gradle sync):
 
 ```shell
 XCODEPROJ_PATH='iosApp/iosApp.xcodeproj' ./gradlew :composeApp:integrateLinkagePackage
@@ -175,38 +208,35 @@ Then resolve packages:
 xcodebuild -resolvePackageDependencies -project iosApp/iosApp.xcodeproj -scheme iosApp
 ```
 
-### 6. iOS — Info.plist
+### Step 5 — Build & Run
 
-Ensure `iosApp/iosApp/Info.plist` contains:
+**Android:**
 
-- `GIDClientID` — the `CLIENT_ID` from your `GoogleService-Info.plist`
-- `CFBundleURLSchemes` — the `REVERSED_CLIENT_ID` from your `GoogleService-Info.plist`
-- `NSCameraUsageDescription` — Camera permission string
-- `NSMicrophoneUsageDescription` — Microphone permission string
-
-## Build & Run
-
-### Android
-
-Use the Android run configuration in Android Studio, or:
+Select the Android run configuration in Android Studio → Run, or:
 
 ```shell
 ./gradlew :composeApp:assembleDebug
 ```
 
-### iOS
+**iOS:**
 
-Use the iOS run configuration in Android Studio, or open `iosApp/` in Xcode and run on a real device.
+Open `iosApp/iosApp.xcodeproj` in Xcode → select your real device → ⌘R
+
+Or use the iOS run configuration in Android Studio.
 
 > **Note:** iOS simulator on Intel Macs is not supported with SwiftPM dependencies. Use a real device.
 
 ## Gotchas
 
-- **`PRODUCT_NAME` collision**: If your Xcode product name matches a Firebase module (e.g. `FirebaseAuth`), you'll get "Multiple commands produce" errors. Rename it in `Config.xcconfig` to something like `FirebaseAuthApp`.
-- **`integrateLinkagePackage`**: Required after adding/changing SwiftPM dependencies in `build.gradle.kts`.
-- **`Missing package product '_internal_linkage_SwiftPMImport'`**: Run `xcodebuild -resolvePackageDependencies` after integrating the linkage package.
-- **Intel Mac**: `iosX64()` target is incompatible with `swiftPMDependencies`. Use a real device for iOS testing.
-- **Agora token**: This project uses `null` token (no-auth mode). For production, enable token authentication in Agora Console.
+| Problem | Fix |
+|---|---|
+| `PRODUCT_NAME` collision with Firebase module names | Rename in `Config.xcconfig` to `FirebaseAuthApp` (already done) |
+| `Missing package product '_internal_linkage_SwiftPMImport'` | Run `xcodebuild -resolvePackageDependencies` |
+| `integrateLinkagePackage` needed | Run after adding/changing SwiftPM deps in `build.gradle.kts` |
+| Intel Mac — `iosX64()` fails with SwiftPM | Don't add `iosX64()`. Use a real iOS device instead |
+| Agora "no token" mode | Fine for testing. For production, enable token auth in Agora Console |
+| `xcrun: error: missing DEVELOPER_DIR` | Run `sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer` |
+| iOS buttons not working after a while | Kotlin/Native GC — ensure strong references to handlers (already handled) |
 
 ## Demo
 
