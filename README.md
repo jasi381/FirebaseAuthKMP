@@ -25,30 +25,11 @@ A **Kotlin Multiplatform** app with **Firebase Authentication**, **Firestore**, 
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                     Compose UI (Common)                  │
-│  App.kt ─── HomeScreen ─── IncomingCallOverlay           │
-│     │            │                  │                     │
-│     ▼            ▼                  ▼                     │
-│  AuthViewModel  CallService     CallSignaling            │
-│  (StateFlow)    (expect/actual) (expect/actual)          │
-│     │               │                │                    │
-│     ▼               ▼                ▼                    │
-│  FirebaseAuth   Agora RTC SDK   Firebase Realtime DB     │
-│  (expect/actual)                                         │
-│  FirebaseFirestoree                                      │
-│  (expect/actual)                                         │
-└──────────────────────────────────────────────────────────┘
-         │                                    │
-    ┌────▼────┐                          ┌────▼────┐
-    │ Android │                          │   iOS   │
-    │  actual │                          │  actual │
-    └─────────┘                          └─────────┘
-  Firebase SDK                      Firebase iOS SDK (SwiftPM)
-  Agora SDK (Maven)                 Agora SDK (SwiftPM)
-  Credential Manager                GIDSignIn
-```
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/3a0742de-16c5-484f-8a7c-81f4dcb80c93" width="600"/>
+  <br/>
+</p>
 
 ### How Calling Works
 
