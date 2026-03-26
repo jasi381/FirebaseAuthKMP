@@ -12,6 +12,8 @@ import platform.UIKit.UIButton
 import platform.UIKit.UIColor
 import platform.UIKit.UIControlEventTouchUpInside
 import platform.UIKit.UIFont
+import platform.UIKit.UIImage
+import platform.UIKit.UIImageView
 import platform.UIKit.UILabel
 import platform.UIKit.UIModalPresentationFullScreen
 import platform.UIKit.UIView
@@ -75,6 +77,17 @@ private class CallActionHandler(
     var speakerBtn: UIButton? = null
     var onCallEnded: (() -> Unit)? = null
 
+    // Consistent color system: active = bright surface, inactive = dimmed surface
+    private val btnActive = UIColor(white = 1.0, alpha = 0.15)
+    private val btnInactive = UIColor(white = 1.0, alpha = 0.08)
+    private val iconActive = UIColor(white = 1.0, alpha = 1.0)
+    private val iconInactive = UIColor(white = 1.0, alpha = 0.4)
+
+    private fun updateToggleButton(btn: UIButton?, active: Boolean) {
+        btn?.backgroundColor = if (active) btnActive else btnInactive
+        btn?.tintColor = if (active) iconActive else iconInactive
+    }
+
     @ObjCAction
     fun endCall() {
         timer?.invalidate()
@@ -88,7 +101,7 @@ private class CallActionHandler(
     fun toggleMic() {
         isMuted = !isMuted
         engine.muteLocalAudioStream(isMuted)
-        micBtn?.backgroundColor = if (isMuted) UIColor.redColor else colorFromHex(0xFF334155u)
+        updateToggleButton(micBtn, active = !isMuted)
     }
 
     @ObjCAction
@@ -96,7 +109,7 @@ private class CallActionHandler(
         isVideoOff = !isVideoOff
         engine.muteLocalVideoStream(isVideoOff)
         if (isVideoOff) engine.stopPreview() else engine.startPreview()
-        videoBtn?.backgroundColor = if (isVideoOff) UIColor.redColor else colorFromHex(0xFF334155u)
+        updateToggleButton(videoBtn, active = !isVideoOff)
     }
 
     @ObjCAction
@@ -108,7 +121,7 @@ private class CallActionHandler(
     fun toggleSpeaker() {
         isSpeakerOn = !isSpeakerOn
         engine.setEnableSpeakerphone(isSpeakerOn)
-        speakerBtn?.backgroundColor = if (isSpeakerOn) colorFromHex(0xFF6366F1u) else colorFromHex(0xFF334155u)
+        updateToggleButton(speakerBtn, active = isSpeakerOn)
     }
 
     @ObjCAction
@@ -241,16 +254,17 @@ actual class CallService actual constructor() {
                 screenHeight * 0.5 - 100.0,
                 avatarSize, avatarSize
             ))
-            avatar.backgroundColor = colorFromHex(0xFF6366F1u)
+            avatar.backgroundColor = UIColor(white = 1.0, alpha = 0.1)
             avatar.layer.cornerRadius = avatarSize / 2.0
             callVC.view.addSubview(avatar)
 
-            val emojiLabel = UILabel(frame = CGRectMake(0.0, 0.0, avatarSize, avatarSize)).apply {
-                text = "\uD83C\uDFA7"
-                font = UIFont.systemFontOfSize(48.0)
-                textAlignment = 1L
+            val iconView = UIImageView(frame = CGRectMake(
+                (avatarSize - 48.0) / 2.0, (avatarSize - 48.0) / 2.0, 48.0, 48.0
+            )).apply {
+                image = UIImage.systemImageNamed("headphones")
+                tintColor = UIColor.whiteColor
             }
-            avatar.addSubview(emojiLabel)
+            avatar.addSubview(iconView)
 
             val audioLabel = UILabel(frame = CGRectMake(0.0, screenHeight / 2.0 + 40.0, screenWidth, 24.0)).apply {
                 text = "Audio Call"
@@ -268,35 +282,45 @@ actual class CallService actual constructor() {
         val btnSize = 56.0
         val endBtnSize = 64.0
 
+        // Active = white 15% alpha, Inactive = white 8% alpha
+        val btnActiveBg = UIColor(white = 1.0, alpha = 0.15)
+        val btnInactiveBg = UIColor(white = 1.0, alpha = 0.08)
+        val endCallRed = colorFromHex(0xFFFF3B30u)
+
         val barBg = UIView(frame = CGRectMake(barPadding, barY, screenWidth - barPadding * 2, barH))
-        barBg.backgroundColor = colorFromHex(0xFF1E293Bu)
-        barBg.layer.cornerRadius = 32.0
+        barBg.backgroundColor = UIColor(white = 0.0, alpha = 0.4)
+        barBg.layer.cornerRadius = 40.0
         callVC.view.addSubview(barBg)
 
         val buttons = mutableListOf<UIButton>()
 
-        val micBtn = makeControlButton("\uD83C\uDF99", btnSize, colorFromHex(0xFF334155u))
+        // Mic: starts active (unmuted)
+        val micBtn = makeControlButton("mic.fill", btnSize, btnActiveBg)
         micBtn.addTarget(handler, action = NSSelectorFromString("toggleMic"), forControlEvents = UIControlEventTouchUpInside)
         handler.micBtn = micBtn
         buttons.add(micBtn)
 
         if (isVideo) {
-            val videoBtn = makeControlButton("\uD83D\uDCF7", btnSize, colorFromHex(0xFF334155u))
+            // Video: starts active (camera on)
+            val videoBtn = makeControlButton("video.fill", btnSize, btnActiveBg)
             videoBtn.addTarget(handler, action = NSSelectorFromString("toggleVideo"), forControlEvents = UIControlEventTouchUpInside)
             handler.videoBtn = videoBtn
             buttons.add(videoBtn)
 
-            val flipBtn = makeControlButton("\uD83D\uDD04", btnSize, colorFromHex(0xFF334155u))
+            // Flip: always same style (not a toggle)
+            val flipBtn = makeControlButton("camera.rotate.fill", btnSize, btnActiveBg)
             flipBtn.addTarget(handler, action = NSSelectorFromString("flipCamera"), forControlEvents = UIControlEventTouchUpInside)
             buttons.add(flipBtn)
         }
 
-        val speakerBtn = makeControlButton("\uD83D\uDD0A", btnSize, colorFromHex(0xFF6366F1u))
+        // Speaker: starts active (speaker on)
+        val speakerBtn = makeControlButton("speaker.wave.3.fill", btnSize, btnActiveBg)
         speakerBtn.addTarget(handler, action = NSSelectorFromString("toggleSpeaker"), forControlEvents = UIControlEventTouchUpInside)
         handler.speakerBtn = speakerBtn
         buttons.add(speakerBtn)
 
-        val endBtn = makeControlButton("\uD83D\uDCDE", endBtnSize, UIColor.redColor)
+        // End call: the ONLY red button
+        val endBtn = makeControlButton("phone.down.fill", endBtnSize, endCallRed)
         endBtn.addTarget(handler, action = NSSelectorFromString("endCall"), forControlEvents = UIControlEventTouchUpInside)
         buttons.add(endBtn)
 
@@ -326,12 +350,13 @@ actual class CallService actual constructor() {
         }
     }
 
-    private fun makeControlButton(emoji: String, size: Double, bgColor: UIColor): UIButton {
+    private fun makeControlButton(sfSymbolName: String, size: Double, bgColor: UIColor): UIButton {
         val btn = UIButton(frame = CGRectMake(0.0, 0.0, size, size))
         btn.backgroundColor = bgColor
         btn.layer.cornerRadius = size / 2.0
-        btn.setTitle(emoji, forState = 0u)
-        btn.titleLabel?.font = UIFont.systemFontOfSize(22.0)
+        val image = UIImage.systemImageNamed(sfSymbolName)
+        btn.setImage(image, forState = 0u)
+        btn.tintColor = UIColor.whiteColor
         return btn
     }
 }

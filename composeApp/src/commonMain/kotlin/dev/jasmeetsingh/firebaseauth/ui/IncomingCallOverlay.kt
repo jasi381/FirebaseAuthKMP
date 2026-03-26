@@ -18,9 +18,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,18 +28,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.jasmeetsingh.composeapp.generated.resources.Res
+import dev.jasmeetsingh.composeapp.generated.resources.ic_check
+import dev.jasmeetsingh.composeapp.generated.resources.ic_close
 import dev.jasmeetsingh.firebaseauth.CallInvite
+import org.jetbrains.compose.resources.vectorResource
 
 private val DarkBg = Color(0xFF0F0F1A)
-private val Indigo = Color(0xFF6366F1)
-private val Purple = Color(0xFF8B5CF6)
-private val Green = Color(0xFF22C55E)
-private val Red = Color(0xFFEF4444)
+private val Green = Color(0xFF30D158)  // iOS system green
+private val Red = Color(0xFFFF3B30)    // iOS system red
 
 @Composable
 fun IncomingCallOverlay(
@@ -73,7 +74,7 @@ fun IncomingCallOverlay(
                     .size(120.dp)
                     .scale(pulseScale)
                     .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(Indigo, Purple))),
+                    .background(Color.White.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center,
             ) {
                 val initial = (invite.callerEmail.firstOrNull() ?: '?').uppercaseChar()
@@ -116,7 +117,12 @@ fun IncomingCallOverlay(
                     shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(containerColor = Red),
                 ) {
-                    Text("✕", fontSize = 28.sp, color = Color.White)
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_close),
+                        contentDescription = "Decline",
+                        modifier = Modifier.size(32.dp),
+                        tint = Color.White,
+                    )
                 }
 
                 Spacer(Modifier.width(48.dp))
@@ -128,7 +134,12 @@ fun IncomingCallOverlay(
                     shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(containerColor = Green),
                 ) {
-                    Text("✓", fontSize = 28.sp, color = Color.White)
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_check),
+                        contentDescription = "Accept",
+                        modifier = Modifier.size(32.dp),
+                        tint = Color.White,
+                    )
                 }
             }
 

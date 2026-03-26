@@ -3,11 +3,14 @@ package dev.jasmeetsingh.firebaseauth
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.os.Bundle
 import android.os.SystemClock
 import android.view.SurfaceView
 import android.widget.Chronometer
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.view.Gravity
@@ -41,7 +44,7 @@ class CallActivity : ComponentActivity() {
     private var remoteUid = -1
 
     private var localSurfaceView: SurfaceView? = null
-    private var localPlaceholder: TextView? = null
+    private var localPlaceholder: ImageView? = null
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -129,8 +132,8 @@ class CallActivity : ComponentActivity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             val bg = GradientDrawable().apply {
-                cornerRadius = 32 * dp
-                setColor(Color.parseColor("#1E293B"))
+                cornerRadius = 40 * dp
+                setColor(Color.argb(102, 0, 0, 0)) // black 40% alpha
             }
             background = bg
             setPadding(24.dp(), 16.dp(), 24.dp(), 16.dp())
@@ -140,21 +143,21 @@ class CallActivity : ComponentActivity() {
         val btnSize = 56.dp()
         val btnMargin = 12.dp()
 
-        // Mic toggle
-        val micBtn = createControlButton(
-            "\uD83C\uDF99", btnSize,
-            Color.parseColor("#334155"), Color.parseColor("#EF4444")
-        ) {
+        // Consistent button colors: active = white 15%, inactive = white 8%
+        val activeBg = Color.argb(38, 255, 255, 255)   // white 15%
+        val inactiveBg = Color.argb(20, 255, 255, 255)  // white 8%
+        val endCallRed = Color.parseColor("#FF3B30")
+
+        // Mic toggle — starts active (unmuted)
+        val micBtn = createIconButton(R.drawable.ic_call_mic, btnSize, activeBg) {
             isMuted = !isMuted
             engine?.muteLocalAudioStream(isMuted)
-            it.background = makeCircleBg(if (isMuted) "#EF4444" else "#334155")
+            it.background = makeCircleBg(if (isMuted) inactiveBg else activeBg)
+            it.alpha = if (isMuted) 0.4f else 1.0f
         }
 
-        // Video toggle (only for video calls)
-        val videoBtn = createControlButton(
-            "\uD83D\uDCF7", btnSize,
-            Color.parseColor("#334155"), Color.parseColor("#EF4444")
-        ) {
+        // Video toggle — starts active (camera on)
+        val videoBtn = createIconButton(R.drawable.ic_call_videocam, btnSize, activeBg) {
             isVideoOff = !isVideoOff
             engine?.muteLocalVideoStream(isVideoOff)
             if (isVideoOff) {
@@ -166,54 +169,43 @@ class CallActivity : ComponentActivity() {
                 localPlaceholder?.visibility = android.view.View.GONE
                 engine?.startPreview()
             }
-            it.background = makeCircleBg(if (isVideoOff) "#EF4444" else "#334155")
+            it.background = makeCircleBg(if (isVideoOff) inactiveBg else activeBg)
+            it.alpha = if (isVideoOff) 0.4f else 1.0f
         }
 
-        // Flip camera
-        val flipBtn = createControlButton(
-            "\uD83D\uDD04", btnSize,
-            Color.parseColor("#334155"), Color.parseColor("#334155")
-        ) {
+        // Flip camera — always active style
+        val flipBtn = createIconButton(R.drawable.ic_call_cameraswitch, btnSize, activeBg) {
             engine?.switchCamera()
         }
 
-        // Speaker toggle
-        val speakerBtn = createControlButton(
-            "\uD83D\uDD0A", btnSize,
-            Color.parseColor("#6366F1"), Color.parseColor("#334155")
-        ) {
+        // Speaker toggle — starts active (speaker on)
+        val speakerBtn = createIconButton(R.drawable.ic_call_volume_up, btnSize, activeBg) {
             isSpeakerOn = !isSpeakerOn
             engine?.setEnableSpeakerphone(isSpeakerOn)
-            it.background = makeCircleBg(if (isSpeakerOn) "#6366F1" else "#334155")
+            it.background = makeCircleBg(if (isSpeakerOn) activeBg else inactiveBg)
+            it.alpha = if (isSpeakerOn) 1.0f else 0.4f
         }
 
-        // End call
-        val endBtn = createControlButton(
-            "\uD83D\uDCDE", 64.dp(),
-            Color.parseColor("#EF4444"), Color.parseColor("#EF4444")
-        ) {
+        // End call — the ONLY red button
+        val endBtn = createIconButton(R.drawable.ic_call_end, 64.dp(), endCallRed) {
             leaveAndFinish()
         }
 
-        fun addWithMargin(btn: android.view.View) {
-            val lp = LinearLayout.LayoutParams(btnSize, btnSize).apply {
+        fun addBtnWithMargin(btn: android.view.View, size: Int = btnSize) {
+            val lp = LinearLayout.LayoutParams(size, size).apply {
                 marginStart = btnMargin / 2
                 marginEnd = btnMargin / 2
             }
             bottomBar.addView(btn, lp)
         }
 
-        addWithMargin(micBtn)
+        addBtnWithMargin(micBtn)
         if (isVideo) {
-            addWithMargin(videoBtn)
-            addWithMargin(flipBtn)
+            addBtnWithMargin(videoBtn)
+            addBtnWithMargin(flipBtn)
         }
-        addWithMargin(speakerBtn)
-
-        val endLp = LinearLayout.LayoutParams(64.dp(), 64.dp()).apply {
-            marginStart = btnMargin
-        }
-        bottomBar.addView(endBtn, endLp)
+        addBtnWithMargin(speakerBtn)
+        addBtnWithMargin(endBtn, 64.dp())
 
         val bottomParams = FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -230,17 +222,24 @@ class CallActivity : ComponentActivity() {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
             }
-            val avatar = TextView(this).apply {
+            val avatarFrame = FrameLayout(this).apply {
                 val bg = GradientDrawable().apply {
                     shape = GradientDrawable.OVAL
-                    setColor(Color.parseColor("#6366F1"))
+                    setColor(Color.argb(26, 255, 255, 255)) // white 10%
                 }
                 background = bg
-                gravity = Gravity.CENTER
-                setTextColor(Color.WHITE)
-                textSize = 40f
-                text = "\uD83C\uDFA7"
             }
+            val avatarIcon = ImageView(this).apply {
+                setImageResource(R.drawable.ic_call_headset)
+                colorFilter = PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                scaleType = ImageView.ScaleType.CENTER_INSIDE
+                val iconPad = (24 * dp).toInt()
+                setPadding(iconPad, iconPad, iconPad, iconPad)
+            }
+            avatarFrame.addView(avatarIcon, FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+            ))
+            val avatar = avatarFrame
             audioPlaceholder.addView(avatar, LinearLayout.LayoutParams(120.dp(), 120.dp()).apply {
                 gravity = Gravity.CENTER
             })
@@ -263,27 +262,30 @@ class CallActivity : ComponentActivity() {
         return root
     }
 
-    private fun createControlButton(
-        emoji: String,
+    private fun createIconButton(
+        drawableRes: Int,
         size: Int,
-        normalColor: Int,
-        activeColor: Int,
-        onClick: (TextView) -> Unit,
-    ): TextView {
-        return TextView(this).apply {
-            text = emoji
-            textSize = 22f
-            gravity = Gravity.CENTER
-            background = makeCircleBg(String.format("#%06X", 0xFFFFFF and normalColor))
+        bgColor: Int,
+        onClick: (ImageView) -> Unit,
+    ): ImageView {
+        val iconPadding = (size * 0.28f).toInt()
+        return ImageView(this).apply {
+            setImageResource(drawableRes)
+            colorFilter = PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
+            setPadding(iconPadding, iconPadding, iconPadding, iconPadding)
+            background = makeCircleBg(bgColor)
             elevation = 4 * resources.displayMetrics.density
+            isClickable = true
+            isFocusable = true
             setOnClickListener { onClick(this) }
         }
     }
 
-    private fun makeCircleBg(colorHex: String): GradientDrawable {
+    private fun makeCircleBg(color: Int): GradientDrawable {
         return GradientDrawable().apply {
             shape = GradientDrawable.OVAL
-            setColor(Color.parseColor(colorHex))
+            setColor(color)
         }
     }
 
@@ -389,14 +391,12 @@ class CallActivity : ComponentActivity() {
             ))
 
             // Placeholder shown when camera is off
-            val dp = resources.displayMetrics.density
-            val placeholder = TextView(this).apply {
-                text = "\uD83D\uDCF7"
-                textSize = 28f
-                gravity = Gravity.CENTER
-                setTextColor(Color.WHITE)
-                visibility = android.view.View.GONE
+            val placeholder = ImageView(this).apply {
+                setImageResource(R.drawable.ic_call_videocam_off)
+                colorFilter = PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                scaleType = ImageView.ScaleType.CENTER
                 setBackgroundColor(Color.parseColor("#1A1A2E"))
+                visibility = android.view.View.GONE
             }
             localPlaceholder = placeholder
             localContainer.addView(placeholder, FrameLayout.LayoutParams(

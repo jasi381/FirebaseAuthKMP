@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -12,6 +13,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -28,8 +30,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.jasmeetsingh.composeapp.generated.resources.Res
+import dev.jasmeetsingh.composeapp.generated.resources.ic_visibility
+import dev.jasmeetsingh.composeapp.generated.resources.ic_visibility_off
+import dev.jasmeetsingh.composeapp.generated.resources.ic_warning
+import org.jetbrains.compose.resources.vectorResource
 
 private val Indigo    = Color(0xFF6366F1)
 private val SlateEdge = Color(0xFF334155)
@@ -62,9 +70,13 @@ fun AuthTextField(
         trailingIcon = if (isPassword) {
             {
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Text(
-                        text = if (passwordVisible) "🙈" else "👁",
-                        fontSize = 16.sp
+                    Icon(
+                        imageVector = vectorResource(
+                            if (passwordVisible) Res.drawable.ic_visibility_off
+                            else Res.drawable.ic_visibility
+                        ),
+                        contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                        tint = Color(0xFF64748B),
                     )
                 }
             }
@@ -148,11 +160,19 @@ fun ErrorMessage(message: String?, modifier: Modifier = Modifier) {
         modifier = modifier,
     ) {
         if (message != null) {
-            Text(
-                text      = "⚠ $message",
-                color     = ErrorRed,
-                fontSize  = 13.sp,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.ic_warning),
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = ErrorRed,
+                )
+                Text(
+                    text      = " $message",
+                    color     = ErrorRed,
+                    fontSize  = 13.sp,
+                )
+            }
         }
     }
 }

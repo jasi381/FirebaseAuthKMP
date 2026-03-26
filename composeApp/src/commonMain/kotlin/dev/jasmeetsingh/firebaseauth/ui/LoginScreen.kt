@@ -15,10 +15,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,6 +37,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.jasmeetsingh.composeapp.generated.resources.Res
+import dev.jasmeetsingh.composeapp.generated.resources.ic_lock
+import org.jetbrains.compose.resources.vectorResource
 
 @Composable
 fun LoginScreen(
@@ -72,7 +77,12 @@ fun LoginScreen(
             // ── Header ────────────────────────────────────────────────────────
             AnimatedVisibility(visible = visible, enter = fadeIn() + slideInVertically { -40 }) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("🔐", fontSize = 52.sp)
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_lock),
+                        contentDescription = "Lock",
+                        modifier = Modifier.size(52.dp),
+                        tint = Color(0xFF6366F1),
+                    )
                     Spacer(Modifier.height(16.dp))
                     Text("Welcome back", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF1F5F9))
                     Spacer(Modifier.height(6.dp))
