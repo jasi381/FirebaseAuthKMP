@@ -218,6 +218,7 @@ Select the Android run configuration in Android Studio → Run, or:
 ./gradlew :composeApp:assembleDebug
 ```
 
+
 **iOS:**
 
 Open `iosApp/iosApp.xcodeproj` in Xcode → select your real device → ⌘R
@@ -240,4 +241,9 @@ Or use the iOS run configuration in Android Studio.
 
 ## Demo
 
+### Auth Demo
 https://github.com/user-attachments/assets/94bcb620-966d-4923-8185-a07a03b90a1a
+
+### Video-Calling/Voice-Calling Demo
+https://github.com/user-attachments/assets/6d2a7913-875f-4a4a-bda9-c742894437ab
+
