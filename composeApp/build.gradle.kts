@@ -1,4 +1,3 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -66,6 +65,8 @@ kotlin {
             implementation(libs.androidx.credentials.play.services)
             implementation(libs.google.id)
             implementation("io.agora.rtc:full-sdk:4.6.2")
+            implementation("com.onesignal:OneSignal:5.7.6")
+            implementation("io.ktor:ktor-client-okhttp:3.1.1")
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -77,7 +78,11 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0-beta01")
-
+            implementation("io.ktor:ktor-client-core:3.1.1")
+            implementation("io.github.aakira:napier:2.7.1")
+        }
+        iosMain.dependencies {
+            implementation("io.ktor:ktor-client-darwin:3.1.1")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

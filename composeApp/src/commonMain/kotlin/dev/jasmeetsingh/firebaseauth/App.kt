@@ -2,13 +2,21 @@ package dev.jasmeetsingh.firebaseauth
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.jasmeetsingh.firebaseauth.ui.HomeScreen
 import dev.jasmeetsingh.firebaseauth.ui.IncomingCallOverlay
 import dev.jasmeetsingh.firebaseauth.ui.LoginScreen
 import dev.jasmeetsingh.firebaseauth.ui.SignUpScreen
+import kotlinx.coroutines.launch
 
 enum class Screen { LOGIN, SIGNUP, HOME }
 
@@ -21,6 +29,7 @@ fun App() {
 
     val callService = remember { CallService() }
     val callSignaling = remember { CallSignaling() }
+    val scope = rememberCoroutineScope()
     var currentScreen by remember { mutableStateOf(Screen.LOGIN) }
 
     // Incoming call state — observed globally
@@ -63,7 +72,6 @@ fun App() {
                     onSignOut = { viewModel.signOut() },
                     onVideoCall = { targetUid ->
                         val channel = listOf(user.uid, targetUid).sorted().joinToString("_")
-                        // Send invite via Realtime DB, then start call
                         callSignaling.sendCallInvite(
                             targetUid = targetUid,
                             callerUid = user.uid,
@@ -72,6 +80,15 @@ fun App() {
                             callType = "video",
                         )
                         callService.startVideoCall(channel)
+                        scope.launch {
+                            OneSignalApi.sendCallPush(
+                                targetUid,
+                                user.uid,
+                                user.email ?: "",
+                                channel,
+                                "video"
+                            )
+                        }
                     },
                     onAudioCall = { targetUid ->
                         val channel = listOf(user.uid, targetUid).sorted().joinToString("_")
@@ -83,6 +100,15 @@ fun App() {
                             callType = "audio",
                         )
                         callService.startAudioCall(channel)
+                        scope.launch {
+                            OneSignalApi.sendCallPush(
+                                targetUid,
+                                user.uid,
+                                user.email ?: "",
+                                channel,
+                                "audio"
+                            )
+                        }
                     },
                 )
             }

@@ -12,7 +12,24 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
 
 
+    <!-- ── Notifications ────────────────────────────────────────── -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />         <!-- API 33+ required -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />     <!-- lock screen activity -->
+
+    <!-- ── Foreground Service ───────────────────────────────────── -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />  <!-- API 34+ call category -->
+
+    <!-- ── Wake device + lock screen ────────────────────────────── -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+
+    <!-- ── Vibration ────────────────────────────────────────────── -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+
     <application
+        android:name=".FireBaseAuthApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -28,7 +45,34 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".CallActivity"/>
+        <activity
+            android:name=".CallActivity"
+            android:launchMode="singleTop"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true" />
+
+        <activity
+            android:name=".IncomingCallActivity"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop"
+            android:showOnLockScreen="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
+            android:turnScreenOn="true" />
+
+        <receiver
+            android:name=".CallActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="dev.jasmeetsingh.firebaseauth.ACTION_ANSWER_CALL" />
+                <action android:name="dev.jasmeetsingh.firebaseauth.ACTION_DECLINE_CALL" />
+            </intent-filter>
+        </receiver>
+
+
+        <meta-data
+            android:name="com.onesignal.NotificationServiceExtension"
+            android:value="dev.jasmeetsingh.firebaseauth.NotificationService" />
     </application>
 
 </manifest>

@@ -1,21 +1,26 @@
 package dev.jasmeetsingh.firebaseauth
 
 import android.Manifest
+import android.app.KeyguardManager
+import android.app.NotificationManager
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
+import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
+import android.view.Gravity
 import android.view.SurfaceView
+import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.Chronometer
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.view.Gravity
-import android.view.ViewGroup
-import android.graphics.drawable.GradientDrawable
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -60,8 +65,42 @@ class CallActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        // Show over lock screen when launched from notification
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+            val keyguardManager = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
+            keyguardManager.requestDismissKeyguard(this, null)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+                        or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                        or WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+            )
+        }
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
         channelName = intent.getStringExtra("channel") ?: return finish()
         isVideo = intent.getBooleanExtra("isVideo", true)
+
+        // If launched from notification answer/tap — cancel notification to stop ringing
+        if (intent.getBooleanExtra("fromNotification", false)) {
+            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            nm.cancel(CallActionReceiver.NOTIFICATION_ID)
+
+            // Accept call in RTDB so the caller sees "accepted", then clean up
+            val callerUid = intent.getStringExtra("callerUid") ?: ""
+            val parts = channelName.split("_")
+            val myUid = parts.firstOrNull { it != callerUid } ?: ""
+            if (myUid.isNotEmpty()) {
+                CallSignaling().acceptCall(myUid)
+                Thread {
+                    Thread.sleep(2000)
+                    CallSignaling().clearCall(myUid)
+                }.start()
+            }
+        }
 
         setContentView(buildUI())
         checkPermissionsAndStart()

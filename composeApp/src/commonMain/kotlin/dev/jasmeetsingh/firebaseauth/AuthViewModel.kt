@@ -24,6 +24,9 @@ class AuthViewModel : ViewModel() {
     private val auth = FirebaseAuth()
     private val db = FirebaseFirestoree()
 
+    private val notif = OneSignalNotifs()
+
+
     // ─── Auth state driven by Firebase's own persistence ─────────────────────
 
     val authState: StateFlow<AuthState> = auth.currentUser()
@@ -51,11 +54,16 @@ class AuthViewModel : ViewModel() {
             uid = user.uid,
             data = mapOf("uid" to user.uid, "email" to (user.email ?: ""))
         )
+
+        notif.login(user.uid)
         user
     }
 
     fun signInWithEmail(email: String, password: String) = launchAuth {
-        auth.signInWithEmail(email, password)
+        val user = auth.signInWithEmail(email, password)
+
+        notif.login(user.uid)
+        user
     }
 
     fun signInWithGoogle() = launchAuth {
@@ -64,11 +72,14 @@ class AuthViewModel : ViewModel() {
             uid = user.uid,
             data = mapOf("uid" to user.uid, "email" to (user.email ?: ""))
         )
+
+        notif.login(user.uid)
         user
     }
 
     fun signOut() {
         viewModelScope.launch {
+            notif.logout()
             runCatching { auth.signOut() }
         }
     }
