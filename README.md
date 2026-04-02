@@ -17,8 +17,9 @@ A **Kotlin Multiplatform** app with **Firebase Authentication**, **Firestore**, 
 - Auth state persistence across app launches
 - User listing via Cloud Firestore
 - **Video & audio calling** via Agora RTC
-- **In-app call signaling** via Firebase Realtime Database (no push notifications needed)
-- Incoming call overlay with accept/reject
+- **In-app call signaling** via Firebase Realtime Database
+- **Push notifications for incoming calls** via OneSignal (Android) — works even when app is in background
+- Incoming call overlay with accept/reject (in-app) + full-screen notification (background)
 - Auto-timeout on unanswered calls (30s)
 - Shared ViewModel & UI across platforms
 - Dark-themed UI with animations
@@ -49,6 +50,56 @@ A **Kotlin Multiplatform** app with **Firebase Authentication**, **Firestore**, 
    └─► Deterministic — same channel regardless of who calls whom
 ```
 
+### Android Push Notification Flow (Background Calls)
+
+When the receiver's app is in the background or killed, in-app listeners won't fire. OneSignal push notifications handle this case on Android:
+
+```
+1. Caller taps call button
+   ├─► Writes invite to /calls/{receiverUid} in Realtime DB
+   ├─► Joins Agora channel
+   └─► Sends push via OneSignalApi.sendCallPush()
+       └─► POST to OneSignal REST API with target external_id = receiverUid
+
+2. OneSignal delivers push to receiver's device
+   └─► NotificationService (INotificationServiceExtension) intercepts it
+       └─► Detects notificationType == "incoming_call"
+       └─► Builds a high-priority CallStyle notification:
+           • Full-screen intent → IncomingCallActivity (shows on lock screen)
+           • Ongoing notification that can't be swiped away
+           • Bypasses Do Not Disturb
+           • System ringtone + vibration pattern (0, 1000, 500, 1000 ms)
+           • "Answer" and "Decline" action buttons
+
+3. User interacts with notification
+   ├─ Answer → IncomingCallActivity opens → launches CallActivity
+   │           └─► Joins Agora channel + updates status in Realtime DB
+   └─ Decline → CallActionReceiver fires
+               └─► Cancels notification + clears /calls/{receiverUid} in Realtime DB
+```
+
+#### Key Components
+
+| Component | Role |
+|---|---|
+| `OneSignalApi` (commonMain) | Sends push via OneSignal REST API with call metadata |
+| `OneSignalNotifs` (androidMain) | Binds user UID to OneSignal on login/logout |
+| `FireBaseAuthApp` (androidMain) | Initializes OneSignal SDK + creates notification channel |
+| `NotificationService` (androidMain) | Intercepts push, builds CallStyle notification with full-screen intent |
+| `IncomingCallActivity` (androidMain) | Lock-screen UI with Answer/Decline buttons |
+| `CallActionReceiver` (androidMain) | BroadcastReceiver handling Decline action from notification |
+
+#### Required Permissions (AndroidManifest.xml)
+
+```xml
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+<uses-permission android:name="android.permission.WAKE_LOCK" />
+<uses-permission android:name="android.permission.VIBRATE" />
+```
+
 ### expect/actual Pattern
 
 All platform-specific code uses Kotlin's `expect`/`actual` mechanism:
@@ -59,6 +110,7 @@ All platform-specific code uses Kotlin's `expect`/`actual` mechanism:
 | `FirebaseFirestoree` | FirebaseFirestore SDK | FIRFirestore via SwiftPM |
 | `CallSignaling` | Firebase Realtime Database SDK | FIRDatabase via SwiftPM |
 | `CallService` | CallActivity with Agora RTC | UIViewController with Agora RTC |
+| `OneSignalNotifs` | OneSignal SDK (login/push) | — (not yet implemented) |
 
 ## Tech Stack
 
@@ -69,6 +121,7 @@ All platform-specific code uses Kotlin's `expect`/`actual` mechanism:
 | Auth | Firebase Auth (Android SDK / iOS SwiftPM) |
 | Database | Cloud Firestore (user data) + Realtime DB (call signaling) |
 | Calling | Agora RTC SDK 4.6.2 (video + audio) |
+| Push Notifications | OneSignal SDK 5.7.6 (Android incoming call alerts) |
 | iOS Deps | SwiftPM (Firebase, GoogleSignIn, Agora) |
 | Architecture | expect/actual, callbackFlow, StateFlow |
 
@@ -84,6 +137,7 @@ composeApp/src/
 │   ├── FirebaseFirestoree.kt     # expect — Firestore interface
 │   ├── CallService.kt            # expect — start video/audio calls
 │   ├── CallSignaling.kt          # expect — Realtime DB signaling + CallInvite model
+│   ├── OneSignalApi.kt           # OneSignal REST API — sends call push notifications
 │   └── ui/
 │       ├── LoginScreen.kt
 │       ├── SignUpScreen.kt
@@ -96,6 +150,11 @@ composeApp/src/
 │   ├── CallSignaling.kt          # Firebase Realtime Database
 │   ├── CallService.kt            # Launches CallActivity
 │   ├── CallActivity.kt           # Agora RTC + programmatic UI
+│   ├── FireBaseAuthApp.kt        # Application — OneSignal init + notification channel
+│   ├── OneSignalNotifs.kt        # OneSignal login/logout binding
+│   ├── NotificationService.kt    # Intercepts push → builds CallStyle notification
+│   ├── IncomingCallActivity.kt   # Full-screen incoming call UI (lock screen)
+│   ├── CallActionReceiver.kt     # BroadcastReceiver for decline action
 │   └── MainActivity.kt
 └── iosMain/                       # iOS implementations
     ├── FirebaseAuth.kt           # GIDSignIn + FIRAuth via SwiftPM
@@ -117,12 +176,12 @@ iosApp/                            # Xcode project entry point
 - Android Studio (with KMP plugin)
 - Xcode 16+
 - A Firebase project with:
-  - Android app registered (package: `dev.jasmeetsingh.firebaseauth`)
-  - iOS app registered
-  - **Authentication > Email/Password** enabled
-  - **Authentication > Google** enabled
-  - **Cloud Firestore** database created
-  - **Realtime Database** created (for call signaling)
+    - Android app registered (package: `dev.jasmeetsingh.firebaseauth`)
+    - iOS app registered
+    - **Authentication > Email/Password** enabled
+    - **Authentication > Google** enabled
+    - **Cloud Firestore** database created
+    - **Realtime Database** created (for call signaling)
 - An [Agora](https://www.agora.io/) account with an App ID
 
 ## Setup (Fresh Clone)
@@ -139,14 +198,14 @@ Open the project in **Android Studio** (with KMP plugin installed).
 
 1. Go to [Firebase Console](https://console.firebase.google.com/) → **Create a project**
 2. **Register an Android app** with package name `dev.jasmeetsingh.firebaseauth`
-   - Download `google-services.json` → place in `composeApp/`
+    - Download `google-services.json` → place in `composeApp/`
 3. **Register an iOS app** with bundle ID `dev.jasmeetsingh.firebaseauth.FirebaseAuthApp`
-   - Download `GoogleService-Info.plist` → place in `iosApp/iosApp/`
+    - Download `GoogleService-Info.plist` → place in `iosApp/iosApp/`
 4. Enable these in Firebase Console:
-   - **Authentication → Sign-in method → Email/Password** ✅
-   - **Authentication → Sign-in method → Google** ✅
-   - **Cloud Firestore → Create database** (test mode is fine to start)
-   - **Realtime Database → Create database** → use these rules:
+    - **Authentication → Sign-in method → Email/Password** ✅
+    - **Authentication → Sign-in method → Google** ✅
+    - **Cloud Firestore → Create database** (test mode is fine to start)
+    - **Realtime Database → Create database** → use these rules:
 
 ```json
 {
