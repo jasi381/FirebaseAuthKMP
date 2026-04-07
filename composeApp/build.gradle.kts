@@ -19,7 +19,7 @@ kotlin {
     
     listOf(
         iosArm64(),             // Real device
-        iosSimulatorArm64()     // Apple Silicon simulator
+    iosSimulatorArm64()     // Apple Silicon simulator
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
@@ -49,6 +49,11 @@ kotlin {
             url = url("https://github.com/AgoraIO/AgoraRtcEngine_iOS.git"),
             version = from("4.6.2"),
             products = listOf(product("RtcBasic"))
+        )
+        swiftPackage(
+            url = url("https://github.com/OneSignal/OneSignal-iOS-SDK.git"),
+            version = from("5.0.0"),
+            products = listOf(product("OneSignalFramework"))
         )
     }
 

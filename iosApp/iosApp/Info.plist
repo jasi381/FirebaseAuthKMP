@@ -4,8 +4,6 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
-	<key>GIDClientID</key>
-	<string>910229613768-2irrma7j7pcvmu2dl7h4c1qlh1o4fa5o.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -15,9 +13,13 @@
 			</array>
 		</dict>
 	</array>
-    <key>NSCameraUsageDescription</key>
-    <string>Camera access for video calls</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Microphone access for calls</string>
+	<key>GIDClientID</key>
+	<string>910229613768-2irrma7j7pcvmu2dl7h4c1qlh1o4fa5o.apps.googleusercontent.com</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>voip</string>
+		<string>fetch</string>
+	</array>
 </dict>
 </plist>

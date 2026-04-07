@@ -1,28 +1,18 @@
 package dev.jasmeetsingh.firebaseauth
 
+import kotlinx.cinterop.ExperimentalForeignApi
+import swiftPMImport.dev.jasmeetsingh.composeApp.OneSignal
 
-// iosMain
+@OptIn(ExperimentalForeignApi::class)
 actual class OneSignalNotifs actual constructor() {
 
-    /**
-     * TODO: Implement push notifications for iOS.
-     * Requires a paid Apple Developer account ($99/year) for APN (Apple Push Notification) setup.
-     * Once available:
-     * 1. Configure APN certificates in Apple Developer Console
-     * 2. Add OneSignal iOS SDK via SPM (github.com/OneSignal/OneSignal-XCFramework)
-     * 3. Call OneSignal.initialize("<ONESIGNAL_APP_ID>") in AppDelegate
-     * 4. Login with: OneSignal.login(userId)
-     */
     actual fun login(userId: String) {
-        // no-op — APN setup required for iOS push notifications
+        OneSignal.login(userId)
+        OneSignal.User()?.pushSubscription?.optIn()
     }
 
-    /**
-     * TODO: Implement logout for iOS.
-     * Once APN is configured, call OneSignal.logout() here
-     * to stop sending push notifications to this device.
-     */
     actual fun logout() {
-        // no-op — APN setup required for iOS push notifications
+        OneSignal.User()?.pushSubscription?.optOut()
+        OneSignal.logout()
     }
 }

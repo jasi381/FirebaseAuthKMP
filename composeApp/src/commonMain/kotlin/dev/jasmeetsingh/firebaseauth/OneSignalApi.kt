@@ -41,8 +41,9 @@ object OneSignalApi {
                     "callType": "$callType",
                     "callerUid": "$callerUid",
                     "callerEmail": "$callerEmail"
-                }
-           
+                },
+                "content_available": true,
+                "mutable_content": true
             }
         """.trimIndent()
 

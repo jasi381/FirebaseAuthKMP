@@ -24,6 +24,10 @@ let package = Package(
     .package(
       url: "https://github.com/AgoraIO/AgoraRtcEngine_iOS.git",
       from: "4.6.2",
+    ),
+    .package(
+      url: "https://github.com/OneSignal/OneSignal-iOS-SDK.git",
+      from: "5.0.0",
     )
   ],
   targets: [
@@ -53,6 +57,10 @@ let package = Package(
         .product(
           name: "RtcBasic",
           package: "AgoraRtcEngine_iOS",
+        ),
+        .product(
+          name: "OneSignalFramework",
+          package: "OneSignal-iOS-SDK",
         )
       ]
     )
